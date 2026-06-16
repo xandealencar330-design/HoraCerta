@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Content Security Policy to secure resources and script execution -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; script-src 'self' 'unsafe-inline';">
+    <title>HoraCerta - Controle de Saldo de Horas</title>
+    <!-- Premium Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="app">
+        <!-- Toast Notification System -->
+        <div id="toast-container" class="toast-container"></div>
+
+        <!-- ================= AUTH VIEW ================= -->
+        <section id="view-auth" class="view-container active-view">
+            <div class="auth-card">
+                <div class="auth-header">
+                    <div class="logo-icon">
+                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                    </div>
+                    <h1>HoraCerta</h1>
+                    <p class="subtitle">Gerencie seu banco de horas de forma transparente</p>
+                </div>
+
+                <!-- Form Login -->
+                <form id="form-login" class="auth-form">
+                    <h2>Entrar na sua conta</h2>
+                    <div class="input-group">
+                        <label for="login-name">Nome Completo</label>
+                        <input type="text" id="login-name" placeholder="Digite seu nome completo" autocomplete="name">
+                    </div>
+                    <div class="input-group">
+                        <label for="login-password">Senha</label>
+                        <input type="password" id="login-password" placeholder="Digite sua senha" autocomplete="current-password">
+                    </div>
+                    <button type="submit" class="btn-primary">Entrar</button>
+                    <p class="auth-switch">Ainda não tem conta? <a href="#" id="link-go-to-register">Cadastre-se</a></p>
+                </form>
+
+                <!-- Form Cadastro -->
+                <form id="form-register" class="auth-form hidden">
+                    <h2>Criar nova conta</h2>
+                    <div class="input-group">
+                        <label for="register-name">Nome Completo</label>
+                        <input type="text" id="register-name" placeholder="Digite seu nome completo" autocomplete="name">
+                    </div>
+                    <div class="input-group">
+                        <label for="register-password">Senha</label>
+                        <input type="password" id="register-password" placeholder="Crie uma senha forte (mín. 8 caracteres)" autocomplete="new-password">
+                    </div>
+                    <div class="input-group">
+                        <label for="register-contract">Tipo de Vínculo</label>
+                        <select id="register-contract">
+                            <option value="" disabled selected>Selecione seu tipo de contrato</option>
+                            <option value="CLT">CLT (44h semanais)</option>
+                            <option value="Estagiário">Estagiário (30h semanais)</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn-primary">Cadastrar</button>
+                    <p class="auth-switch">Já possui uma conta? <a href="#" id="link-go-to-login">Fazer Login</a></p>
+                </form>
+            </div>
+        </section>
+
+        <!-- ================= APP LAYOUT VIEW ================= -->
+        <section id="view-dashboard-layout" class="view-container hidden">
+            <!-- Sidebar / Navigation -->
+            <aside class="sidebar">
+                <div class="sidebar-brand">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                    <span>HoraCerta</span>
+                </div>
+                <div class="user-profile-badge">
+                    <div class="user-avatar" id="nav-user-avatar">U</div>
+                    <div class="user-info">
+                        <span class="user-name" id="nav-user-name">Usuário</span>
+                        <span class="badge" id="nav-user-badge">CLT</span>
+                    </div>
+                </div>
+                <nav class="sidebar-nav">
+                    <button class="nav-item active" data-target="panel-summary">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9"></rect><rect x="14" y="3" width="7" height="5"></rect><rect x="14" y="12" width="7" height="9"></rect><rect x="3" y="16" width="7" height="5"></rect></svg>
+                        Painel Geral
+                    </button>
+                    <button class="nav-item" data-target="panel-register">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 8 12 12 14 14"></polyline><line x1="12" y1="16" x2="12" y2="16"></line><path d="M12 2v2"></path><path d="M12 20v2"></path><path d="m4.93 4.93 1.41 1.41"></path><path d="m17.66 17.66 1.41 1.41"></path><path d="M2 12h2"></path><path d="M20 12h2"></path><path d="m6.34 17.66-1.41 1.41"></path><path d="m19.07 4.93-1.41 1.41"></path></svg>
+                        Registrar Ponto
+                    </button>
+                    <button class="nav-item" data-target="panel-history">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8v4l3 3"></path><path d="M3.05 11a9 9 0 1 1 .5 4m-.5 5v-5h5"></path></svg>
+                        Histórico
+                    </button>
+                    <button class="nav-item" data-target="panel-charts">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
+                        Desempenho
+                    </button>
+                </nav>
+                <div class="sidebar-footer">
+                    <button id="btn-logout" class="btn-logout">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+                        Sair do Sistema
+                    </button>
+                </div>
+            </aside>
+
+            <!-- Main App Content -->
+            <main class="main-content">
+                <header class="app-header">
+                    <button id="btn-toggle-sidebar" class="btn-icon sidebar-toggle">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+                    </button>
+                    <div class="header-title">
+                        <h1 id="header-panel-title">Painel Geral</h1>
+                        <p class="text-secondary" id="header-panel-subtitle">Resumo geral das suas horas acumuladas.</p>
+                    </div>
+                    <div class="header-actions">
+                        <span class="date-display" id="header-date">Terça, 16 de Junho de 2026</span>
+                    </div>
+                </header>
+
+                <div class="content-body">
+                    <!-- ================= PANEL: SUMMARY ================= -->
+                    <div id="panel-summary" class="panel-section active-panel">
+                        <!-- Balance Card (Main highlight) -->
+                        <div class="balance-card" id="main-balance-card">
+                            <div class="balance-card-header">
+                                <span class="card-label">Saldo Acumulado Atual</span>
+                                <span class="indicator-dot" id="balance-indicator"></span>
+                            </div>
+                            <div class="balance-value" id="balance-value-display">--h --min</div>
+                            <div class="balance-message" id="balance-message-text">Carregando saldo...</div>
+                            <div class="balance-card-bg-icon">
+                                <svg width="150" height="150" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="0.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                            </div>
+                        </div>
+
+                        <!-- Stats Grid -->
+                        <div class="stats-grid">
+                            <div class="stat-card">
+                                <div class="stat-icon info">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                                </div>
+                                <div class="stat-details">
+                                    <span class="stat-label">Tipo de Contrato</span>
+                                    <span class="stat-value" id="stat-contract-type">--</span>
+                                </div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-icon primary">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 8 14"></polyline></svg>
+                                </div>
+                                <div class="stat-details">
+                                    <span class="stat-label">Exigência Semanal</span>
+                                    <span class="stat-value" id="stat-hours-required">--</span>
+                                </div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-icon success">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                                </div>
+                                <div class="stat-details">
+                                    <span class="stat-label">Horas Trabalhadas na Semana</span>
+                                    <span class="stat-value" id="stat-hours-worked">--</span>
+                                </div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-icon warning" id="stat-diff-icon-container">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                                </div>
+                                <div class="stat-details">
+                                    <span class="stat-label">Diferença na Semana</span>
+                                    <span class="stat-value" id="stat-hours-diff">--</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Quick Punch card -->
+                        <div class="card panel-card">
+                            <div class="card-header">
+                                <h2>Resumo Rápido da Semana</h2>
+                                <p class="text-secondary">Estatísticas calculadas a partir dos seus registros salvos na semana ativa.</p>
+                            </div>
+                            <div class="quick-summary-details">
+                                <div class="info-bar">
+                                    <p>O saldo geral é calculado baseando-se no total de horas trabalhadas cadastradas no histórico em relação à carga horária total exigida nas semanas correspondentes.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ================= PANEL: REGISTER ================= -->
+                    <div id="panel-register" class="panel-section">
+                        <div class="grid-two-columns">
+                            <!-- Punch Form -->
+                            <div class="card">
+                                <div class="card-header border-bottom">
+                                    <h2>Lançamento de Registro Diário</h2>
+                                    <p class="text-secondary">Insira os horários correspondentes à sua jornada de trabalho.</p>
+                                </div>
+                                <form id="form-register-hours" class="form-body">
+                                    <div class="input-group">
+                                        <label for="point-date">Data do Registro</label>
+                                        <input type="date" id="point-date" required>
+                                    </div>
+                                    <div class="grid-two-columns" style="gap: 1.5rem; margin-bottom: 0;">
+                                        <div class="input-group">
+                                            <label for="point-entry">Horário de Entrada</label>
+                                            <input type="time" id="point-entry" required>
+                                        </div>
+                                        <div class="input-group">
+                                            <label for="point-lunch-out">Saída Almoço</label>
+                                            <input type="time" id="point-lunch-out" required>
+                                        </div>
+                                    </div>
+                                    <div class="grid-two-columns" style="gap: 1.5rem; margin-bottom: 0;">
+                                        <div class="input-group">
+                                            <label for="point-lunch-return">Retorno Almoço</label>
+                                            <input type="time" id="point-lunch-return" required>
+                                        </div>
+                                        <div class="input-group">
+                                            <label for="point-exit">Horário de Saída</label>
+                                            <input type="time" id="point-exit" required>
+                                        </div>
+                                    </div>
+                                    <button type="submit" class="btn-primary">Salvar Registro</button>
+                                </form>
+                            </div>
+
+                            <!-- Rules and Reference Card -->
+                            <div class="card help-card">
+                                <div class="card-header">
+                                    <h2>Como funciona o cálculo?</h2>
+                                </div>
+                                <div class="help-content">
+                                    <div class="help-item">
+                                        <div class="help-number">1</div>
+                                        <div class="help-text">
+                                            <h3>Horas Diárias Trabalhadas</h3>
+                                            <p>Calculado pela soma dos períodos de trabalho: do horário de <strong>Entrada</strong> até a <strong>Saída Almoço</strong>, mais o período do <strong>Retorno Almoço</strong> até a <strong>Saída</strong> final.</p>
+                                        </div>
+                                    </div>
+                                    <div class="help-item">
+                                        <div class="help-number">2</div>
+                                        <div class="help-text">
+                                            <h3>Segurança dos Registros</h3>
+                                            <p>O sistema valida e não permite que sejam salvas jornadas com períodos negativos (por exemplo, retorno de almoço antes da saída de almoço ou horário de saída antes do horário de entrada).</p>
+                                        </div>
+                                    </div>
+                                    <div class="help-item">
+                                        <div class="help-number">3</div>
+                                        <div class="help-text">
+                                            <h3>Carga Horária Semanal</h3>
+                                            <p>As horas que você precisa cumprir por semana são definidas pelo seu vínculo selecionado no cadastro: <strong>44 horas</strong> para CLT e <strong>30 horas</strong> para Estagiário.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ================= PANEL: HISTORY ================= -->
+                    <div id="panel-history" class="panel-section">
+                        <div class="card">
+                            <div class="card-header-actions border-bottom">
+                                <div>
+                                    <h2>Histórico de Registros</h2>
+                                    <p class="text-secondary">Lista completa de todos os dias cadastrados no sistema.</p>
+                                </div>
+                                <div class="filter-actions">
+                                    <input type="month" id="filter-month" class="input-filter">
+                                    <button id="btn-clear-filter" class="btn-secondary">Limpar</button>
+                                </div>
+                            </div>
+                            <div class="table-container">
+                                <table class="custom-table" id="table-history-entries">
+                                    <thead>
+                                        <tr>
+                                            <th>Data</th>
+                                            <th>Entrada</th>
+                                            <th>Saída Almoço</th>
+                                            <th>Retorno Almoço</th>
+                                            <th>Saída</th>
+                                            <th>Horas do Dia</th>
+                                            <th>Ações</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="table-body-history">
+                                        <!-- Dynamic entries go here -->
+                                    </tbody>
+                                </table>
+                                <div id="history-empty-message" class="empty-state hidden">
+                                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                                    <p>Nenhum registro de ponto encontrado para o período selecionado.</p>
+                                    <button class="btn-secondary" id="btn-empty-state-go-register">Lançar Meu Primeiro Ponto</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ================= PANEL: CHARTS ================= -->
+                    <div id="panel-charts" class="panel-section">
+                        <div class="grid-two-columns">
+                            <!-- SVG Chart Card -->
+                            <div class="card">
+                                <div class="card-header">
+                                    <h2>Evolução do Saldo de Horas</h2>
+                                    <p class="text-secondary">Evolução cumulativa do seu banco de horas ao longo dos dias registrados.</p>
+                                </div>
+                                <div class="chart-wrapper">
+                                    <!-- Dynamic SVG Graph will be drawn here -->
+                                    <div id="svg-chart-container" class="svg-container"></div>
+                                </div>
+                            </div>
+
+                            <!-- Performance Summary Card -->
+                            <div class="card">
+                                <div class="card-header border-bottom">
+                                    <h2>Métricas de Acompanhamento</h2>
+                                    <p class="text-secondary">Informações agregadas sobre sua consistência e jornadas.</p>
+                                </div>
+                                <div class="metrics-summary-content">
+                                    <div class="metric-row">
+                                        <span class="metric-desc">Total de Dias Registrados</span>
+                                        <span class="metric-num" id="metric-total-days">0</span>
+                                    </div>
+                                    <div class="metric-row">
+                                        <span class="metric-desc">Total de Horas Trabalhadas</span>
+                                        <span class="metric-num" id="metric-total-worked">0h 00min</span>
+                                    </div>
+                                    <div class="metric-row">
+                                        <span class="metric-desc">Carga Horária Total Requerida</span>
+                                        <span class="metric-num" id="metric-total-required">0h 00min</span>
+                                    </div>
+                                    <div class="metric-row border-top">
+                                        <span class="metric-desc font-semibold">Saldo Acumulado Geral</span>
+                                        <span class="metric-num font-semibold" id="metric-overall-balance">0h 00min</span>
+                                    </div>
+
+                                    <div class="chart-legend-box">
+                                        <h3>Como interpretar o gráfico:</h3>
+                                        <p>O gráfico exibe o <strong>saldo de horas acumulado</strong> a cada novo registro. Uma linha ascendente indica que você está acumulando horas positivas. Uma linha descendente significa que as horas estão abaixo da carga requerida.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </section>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
