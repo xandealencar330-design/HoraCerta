@@ -64,6 +64,21 @@ document.addEventListener('DOMContentLoaded', () => {
     const statHoursDiff = document.getElementById('stat-hours-diff');
     const statDiffIconContainer = document.getElementById('stat-diff-icon-container');
 
+    // Workload Tracking Elements
+    const trackingDailySubtitle = document.getElementById('tracking-daily-subtitle');
+    const progressDailyFill = document.getElementById('progress-daily-fill');
+    const progressDailyPercentage = document.getElementById('progress-daily-percentage');
+    const alertDailyBox = document.getElementById('alert-daily-box');
+    const alertDailyIcon = document.getElementById('alert-daily-icon');
+    const alertDailyText = document.getElementById('alert-daily-text');
+
+    const trackingWeeklySubtitle = document.getElementById('tracking-weekly-subtitle');
+    const progressWeeklyFill = document.getElementById('progress-weekly-fill');
+    const progressWeeklyPercentage = document.getElementById('progress-weekly-percentage');
+    const alertWeeklyBox = document.getElementById('alert-weekly-box');
+    const alertWeeklyIcon = document.getElementById('alert-weekly-icon');
+    const alertWeeklyText = document.getElementById('alert-weekly-text');
+
     // Register Form Elements
     const formRegisterHours = document.getElementById('form-register-hours');
     const pointDateInput = document.getElementById('point-date');
@@ -662,6 +677,66 @@ document.addEventListener('DOMContentLoaded', () => {
             polyline.setAttribute('points', '6 9 12 15 18 9');
             svgArrowDown.appendChild(polyline);
             statDiffIconContainer.appendChild(svgArrowDown);
+        }
+
+        // 3. Workload Tracking Calculations
+        
+        // --- Daily Progress ---
+        const todayStr = new Date().toISOString().split('T')[0];
+        const todayEntry = currentUser.entries.find(ent => ent.date === todayStr);
+        const dailyWorkedMinutes = todayEntry ? calculateWorkedMinutes(todayEntry) : 0;
+        const dailyRequiredMinutes = config.dailyTargetMinutes;
+        
+        // Calculate daily percentage
+        const dailyPercentage = Math.min(100, Math.round((dailyWorkedMinutes / dailyRequiredMinutes) * 100));
+        
+        // Update daily elements
+        trackingDailySubtitle.textContent = `Meta: ${dailyRequiredMinutes / 60}h`;
+        progressDailyFill.style.width = `${dailyPercentage}%`;
+        progressDailyPercentage.textContent = `${dailyPercentage}%`;
+        
+        // Remove prior alert classes
+        alertDailyBox.classList.remove('alert-warning', 'alert-success', 'alert-danger');
+        
+        if (dailyWorkedMinutes >= dailyRequiredMinutes) {
+            alertDailyBox.classList.add('alert-success');
+            alertDailyIcon.textContent = '✅';
+            alertDailyText.textContent = 'Você concluiu sua carga horária do dia.';
+        } else {
+            alertDailyBox.classList.add('alert-warning');
+            alertDailyIcon.textContent = '⚠️';
+            const remainingDailyMinutes = dailyRequiredMinutes - dailyWorkedMinutes;
+            alertDailyText.textContent = `Faltam ${minutesToHoursString(remainingDailyMinutes)} para completar sua jornada diária.`;
+        }
+        
+        // --- Weekly Progress ---
+        const weeklyWorkedMinutes = weekMetrics.workedMinutes;
+        const weeklyRequiredMinutes = config.weeklyRequiredMinutes;
+        
+        // Calculate weekly percentage
+        const weeklyPercentage = Math.min(100, Math.round((weeklyWorkedMinutes / weeklyRequiredMinutes) * 100));
+        
+        // Update weekly elements
+        trackingWeeklySubtitle.textContent = `Meta: ${weeklyRequiredMinutes / 60}h`;
+        progressWeeklyFill.style.width = `${weeklyPercentage}%`;
+        progressWeeklyPercentage.textContent = `${weeklyPercentage}%`;
+        
+        // Remove prior alert classes
+        alertWeeklyBox.classList.remove('alert-warning', 'alert-success', 'alert-danger');
+        
+        if (weeklyWorkedMinutes >= weeklyRequiredMinutes) {
+            alertWeeklyBox.classList.add('alert-success');
+            alertWeeklyIcon.textContent = '✅';
+            alertWeeklyText.textContent = 'Você concluiu sua carga horária da semana.';
+        } else if (balance < 0) {
+            alertWeeklyBox.classList.add('alert-danger');
+            alertWeeklyIcon.textContent = '⚠️';
+            alertWeeklyText.textContent = `Você está com ${minutesToHoursString(Math.abs(balance))} negativas.`;
+        } else {
+            alertWeeklyBox.classList.add('alert-warning');
+            alertWeeklyIcon.textContent = '⚠️';
+            const remainingWeeklyMinutes = weeklyRequiredMinutes - weeklyWorkedMinutes;
+            alertWeeklyText.textContent = `Faltam ${minutesToHoursString(remainingWeeklyMinutes)} para completar sua jornada semanal.`;
         }
     }
 

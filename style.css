@@ -1077,3 +1077,67 @@ button, .btn {
         font-size: 0.875rem;
     }
 }
+
+/* Progress Bar Styles */
+.progress-bar-container {
+    background-color: var(--color-border);
+    height: 24px;
+    border-radius: 9999px;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 16px;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.06);
+}
+
+.progress-bar-fill {
+    height: 100%;
+    position: absolute;
+    left: 0;
+    top: 0;
+    background: linear-gradient(90deg, var(--color-primary), #6366f1);
+    border-radius: 9999px;
+    transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.progress-bar-text {
+    position: relative;
+    z-index: 2;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--color-text-primary);
+    text-shadow: 0 1px 0 rgba(255, 255, 255, 0.4);
+}
+
+/* Alert Box Styles */
+.alert-box {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 18px;
+    border-radius: var(--border-radius-sm);
+    font-size: 0.9rem;
+    font-weight: 600;
+    transition: all var(--transition-fast);
+    line-height: 1.4;
+}
+
+.alert-warning {
+    background-color: #fffbeb;
+    color: #b45309;
+    border: 1px solid #fde68a;
+}
+
+.alert-success {
+    background-color: var(--color-success-light);
+    color: var(--color-success-hover);
+    border: 1px solid #a7f3d0;
+}
+
+.alert-danger {
+    background-color: var(--color-danger-light);
+    color: var(--color-danger-hover);
+    border: 1px solid #fecaca;
+}

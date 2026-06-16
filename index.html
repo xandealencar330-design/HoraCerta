@@ -192,15 +192,41 @@
                             </div>
                         </div>
 
-                        <!-- Quick Punch card -->
-                        <div class="card panel-card">
-                            <div class="card-header">
-                                <h2>Resumo Rápido da Semana</h2>
-                                <p class="text-secondary">Estatísticas calculadas a partir dos seus registros salvos na semana ativa.</p>
+                        <!-- Workload Tracking Panel -->
+                        <div class="grid-two-columns" style="gap: 24px; margin-bottom: 32px;">
+                            <!-- Progresso Diário -->
+                            <div class="card panel-card" style="margin-bottom: 0;">
+                                <div class="card-header" style="padding-bottom: 12px;">
+                                    <h2>Jornada Diária (Hoje)</h2>
+                                    <p class="text-secondary" id="tracking-daily-subtitle">Meta: --h</p>
+                                </div>
+                                <div style="padding: 0 24px 24px 24px;">
+                                    <div class="progress-bar-container">
+                                        <div class="progress-bar-fill" id="progress-daily-fill" style="width: 0%;"></div>
+                                        <span class="progress-bar-text" id="progress-daily-percentage">0%</span>
+                                    </div>
+                                    <div class="alert-box" id="alert-daily-box">
+                                        <span class="alert-icon" id="alert-daily-icon">⚠️</span>
+                                        <span class="alert-text" id="alert-daily-text">Faltam --h para completar sua jornada diária.</span>
+                                    </div>
+                                </div>
                             </div>
-                            <div class="quick-summary-details">
-                                <div class="info-bar">
-                                    <p>O saldo geral é calculado baseando-se no total de horas trabalhadas cadastradas no histórico em relação à carga horária total exigida nas semanas correspondentes.</p>
+
+                            <!-- Progresso Semanal -->
+                            <div class="card panel-card" style="margin-bottom: 0;">
+                                <div class="card-header" style="padding-bottom: 12px;">
+                                    <h2>Jornada Semanal (Semana Ativa)</h2>
+                                    <p class="text-secondary" id="tracking-weekly-subtitle">Meta: --h</p>
+                                </div>
+                                <div style="padding: 0 24px 24px 24px;">
+                                    <div class="progress-bar-container">
+                                        <div class="progress-bar-fill" id="progress-weekly-fill" style="width: 0%;"></div>
+                                        <span class="progress-bar-text" id="progress-weekly-percentage">0%</span>
+                                    </div>
+                                    <div class="alert-box" id="alert-weekly-box">
+                                        <span class="alert-icon" id="alert-weekly-icon">⚠️</span>
+                                        <span class="alert-text" id="alert-weekly-text">Faltam --h para completar sua jornada semanal.</span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
