@@ -12,11 +12,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const CONTRACT_CONFIGS = {
         'CLT': {
             weeklyRequiredMinutes: 44 * 60, // 2640 minutes
-            dailyTargetMinutes: (44 / 5) * 60 // 8.8 hours = 528 minutes (assuming 5-day week base)
+            dailyTargetMinutes: 9 * 60 // 9 hours = 540 minutes
         },
         'Estagiário': {
             weeklyRequiredMinutes: 30 * 60, // 1800 minutes
-            dailyTargetMinutes: (30 / 5) * 60 // 6 hours = 360 minutes
+            dailyTargetMinutes: 6 * 60 // 6 hours = 360 minutes
         }
     };
 
@@ -59,6 +59,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const balanceMessageText = document.getElementById('balance-message-text');
     const statContractType = document.getElementById('stat-contract-type');
     const statHoursRequired = document.getElementById('stat-hours-required');
+    const statHoursRequiredDaily = document.getElementById('stat-hours-required-daily');
     const statHoursWorked = document.getElementById('stat-hours-worked');
     const statHoursDiff = document.getElementById('stat-hours-diff');
     const statDiffIconContainer = document.getElementById('stat-diff-icon-container');
@@ -588,6 +589,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // 2. Metrics Info Grid
         statContractType.textContent = currentUser.contractType;
         statHoursRequired.textContent = `${config.weeklyRequiredMinutes / 60}h`;
+        statHoursRequiredDaily.textContent = `${config.dailyTargetMinutes / 60}h`;
 
         // Weekly current week details
         const weekMetrics = computeCurrentWeekMetrics(metrics.weeksMap);
@@ -783,7 +785,29 @@ document.addEventListener('DOMContentLoaded', () => {
             // Daily Total column
             const tdWorked = document.createElement('td');
             const dailyWorkedMinutes = calculateWorkedMinutes(entry);
-            tdWorked.textContent = minutesToHoursString(dailyWorkedMinutes);
+            const config = CONTRACT_CONFIGS[currentUser.contractType] || CONTRACT_CONFIGS['CLT'];
+            const dailyBalance = dailyWorkedMinutes - config.dailyTargetMinutes;
+            const balanceSign = dailyBalance >= 0 ? '+' : '-';
+            const absBalanceMin = Math.abs(dailyBalance);
+            const balH = Math.floor(absBalanceMin / 60);
+            const balM = absBalanceMin % 60;
+            const balanceStr = `${balanceSign}${balH}h ${balM.toString().padStart(2, '0')}min`;
+            
+            const durationSpan = document.createElement('span');
+            durationSpan.textContent = minutesToHoursString(dailyWorkedMinutes) + ' ';
+            
+            const balanceSpan = document.createElement('span');
+            balanceSpan.textContent = `(${balanceStr})`;
+            balanceSpan.style.fontSize = '0.85rem';
+            balanceSpan.style.fontWeight = '600';
+            if (dailyBalance >= 0) {
+                balanceSpan.style.color = 'var(--color-success)';
+            } else {
+                balanceSpan.style.color = 'var(--color-danger)';
+            }
+            
+            tdWorked.appendChild(durationSpan);
+            tdWorked.appendChild(balanceSpan);
             tr.appendChild(tdWorked);
 
             // Actions column
