@@ -1,8 +1,12 @@
+const SUPABASE_URL = "https://nxzvxluhetjktfohhuxy.supabase.co";
+const SUPABASE_KEY = "sb_publishable_gmxU_wrHczTHQrxvyHx8wQ_JPRe0z2v";
+
+const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
 /**
  * HoraCerta - Controle de Saldo de Horas
  * Core Application Script
  */
-
 document.addEventListener('DOMContentLoaded', () => {
     // ================= STATE & CONFIGURATION =================
     const STORAGE_KEY_USERS = 'horacerta_users_data';
@@ -116,6 +120,11 @@ document.addEventListener('DOMContentLoaded', () => {
         // Router check
         if (currentUser) {
             showDashboard();
+            carregarPontosDoSupabase().then(() => {
+                updateDashboardData();
+            }).catch(err => {
+                console.error("Erro ao sincronizar dados com Supabase no início:", err);
+            });
         } else {
             showAuth();
         }
@@ -163,18 +172,42 @@ document.addEventListener('DOMContentLoaded', () => {
         localStorage.setItem(STORAGE_KEY_USERS, JSON.stringify(users));
     }
 
-    function loadCurrentSession() {
-        const userNameKey = localStorage.getItem(STORAGE_KEY_CURRENT);
-        if (userNameKey && users[userNameKey]) {
-            return users[userNameKey];
-        }
-        return null;
+   function loadCurrentSession() {
+    const data = localStorage.getItem(STORAGE_KEY_CURRENT);
+    return data ? JSON.parse(data) : null;
+}
+
+function setCurrentSession(userData) {
+    localStorage.setItem(STORAGE_KEY_CURRENT, JSON.stringify(userData));
+    currentUser = userData;
+}
+
+async function carregarPontosDoSupabase() {
+    if (!currentUser || !currentUser.id) return;
+
+    const { data, error } = await supabaseClient
+        .from("registros_ponto")
+        .select("*")
+        .eq("usuario_id", currentUser.id)
+        .order("data", { ascending: true });
+
+    if (error) {
+        showToast("Erro ao carregar pontos: " + error.message, "error");
+        currentUser.entries = [];
+        return;
     }
 
-    function setCurrentSession(userNameKey) {
-        localStorage.setItem(STORAGE_KEY_CURRENT, userNameKey);
-        currentUser = users[userNameKey];
-    }
+    currentUser.entries = data.map(ponto => ({
+        id: ponto.id,
+        date: ponto.data,
+        entry: ponto.entrada,
+        lunchOut: ponto.saida_almoco,
+        lunchReturn: ponto.retorno_almoco,
+        exit: ponto.saida
+    }));
+
+    setCurrentSession(currentUser);
+}
 
     function clearCurrentSession() {
         localStorage.removeItem(STORAGE_KEY_CURRENT);
@@ -284,8 +317,8 @@ document.addEventListener('DOMContentLoaded', () => {
         e.preventDefault();
         formLogin.classList.add('hidden');
         formRegister.classList.remove('hidden');
-    });
 
+    });;
     linkGoToLogin.addEventListener('click', (e) => {
         e.preventDefault();
         formRegister.classList.add('hidden');
@@ -328,35 +361,32 @@ document.addEventListener('DOMContentLoaded', () => {
             showToast('Por favor, selecione o tipo de vínculo.', 'error');
             return;
         }
-
-        const userKey = name.toLowerCase().replace(/\s+/g, '_');
-        
-        if (users[userKey]) {
-            showToast('Este usuário já possui cadastro no sistema.', 'error');
-            return;
-        }
-
         try {
-            const passwordHash = await hashPassword(password);
-            
-            // Create user
-            users[userKey] = {
-                name: name,
-                passwordHash: passwordHash,
-                contractType: contractType,
-                entries: []
-            };
-            
-            saveUsersData();
-            showToast('Cadastro realizado com sucesso! Faça seu login.', 'success');
-            
-            // Go to login view
-            formRegister.classList.add('hidden');
-            formLogin.classList.remove('hidden');
-            clearAuthInputs();
-        } catch (err) {
-            showToast('Erro ao realizar o cadastro. Tente novamente.', 'error');
-        }
+    const passwordHash = await hashPassword(password);
+
+    const { data, error } = await supabaseClient
+        .from("usuarios")
+        .insert([
+            {
+                nome: name,
+        senha: passwordHash,
+        tipo_contrato: contractType
+            }
+        ]);
+
+    if (error) {
+        showToast("Erro ao cadastrar: " + error.message, "error");
+        return;
+    }
+
+    showToast("Cadastro realizado com sucesso! Faça seu login.", "success");
+    formRegister.classList.add("hidden");
+    formLogin.classList.remove("hidden");
+    clearAuthInputs();
+
+} catch (err) {
+    showToast("Erro ao realizar o cadastro. Tente novamente.", "error");
+}
     });
 
     // Handle Login Submit
@@ -372,24 +402,40 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         const userKey = name.toLowerCase().replace(/\s+/g, '_');
-        
-        if (!users[userKey]) {
-            showToast('Usuário não cadastrado.', 'error');
-            return;
-        }
 
-        try {
-            const calculatedHash = await hashPassword(password);
-            if (users[userKey].passwordHash === calculatedHash) {
-                setCurrentSession(userKey);
-                showToast(`Bem-vindo, ${currentUser.name}!`, 'success');
-                showDashboard();
-            } else {
-                showToast('Senha incorreta.', 'error');
-            }
-        } catch (err) {
-            showToast('Erro ao validar dados de login.', 'error');
-        }
+      try {
+    const calculatedHash = await hashPassword(password);
+
+    const { data, error } = await supabaseClient
+        .from("usuarios")
+        .select("*")
+        .eq("nome", name)
+        .eq("senha", calculatedHash)
+        .maybeSingle();
+
+    if (error || !data) {
+    showToast("Login inválido.", "error");
+    return;
+    }
+
+   setCurrentSession({
+    id: data.id,
+    name: data.nome,
+    senha: data.senha,
+    contractType: data.tipo_contrato || "CLT",
+    entries: []
+});
+currentUser = loadCurrentSession();
+
+await carregarPontosDoSupabase();
+
+showToast(`Bem-vindo, ${currentUser.name}!`, "success");
+showDashboard();
+
+} catch (err) {
+    console.error("ERRO REAL DO LOGIN:", err);
+    showToast("Erro ao validar dados de login: " + err.message, "error");
+}
     });
 
     // Logout Action
@@ -749,77 +795,119 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // ================= REGISTER HOURS ENDPOINT =================
-    formRegisterHours.addEventListener('submit', (e) => {
-        e.preventDefault();
-        
-        const date = pointDateInput.value;
-        const entry = pointEntryInput.value;
-        const lunchOut = pointLunchOutInput.value;
-        const lunchReturn = pointLunchReturnInput.value;
-        const exit = pointExitInput.value;
+    // ================= REGISTER HOURS ENDPOINT =================
+formRegisterHours.addEventListener('submit', async (e) => {
+    e.preventDefault();
 
-        // Empty validation
-        if (!date || !entry || !lunchOut || !lunchReturn || !exit) {
-            showToast('Por favor, preencha todos os campos do horário.', 'error');
-            return;
-        }
+    const date = pointDateInput.value;
+    const entry = pointEntryInput.value;
+    const lunchOut = pointLunchOutInput.value;
+    const lunchReturn = pointLunchReturnInput.value;
+    const exit = pointExitInput.value;
 
-        // Validate time sequences (no negative hours allowed)
-        const entryMin = timeToMinutes(entry);
-        const lunchOutMin = timeToMinutes(lunchOut);
-        const lunchReturnMin = timeToMinutes(lunchReturn);
-        const exitMin = timeToMinutes(exit);
+    console.log("CLICOU EM SALVAR REGISTRO");
+    console.log("USUÁRIO ATUAL:", currentUser);
+    console.log("DADOS DO PONTO:", {
+        date,
+        entry,
+        lunchOut,
+        lunchReturn,
+        exit
+    });
 
-        if (lunchOutMin <= entryMin) {
-            showToast('A saída para almoço deve ser posterior à entrada.', 'error');
-            return;
-        }
-        if (lunchReturnMin <= lunchOutMin) {
-            showToast('O retorno do almoço deve ser posterior à saída de almoço.', 'error');
-            return;
-        }
-        if (exitMin <= lunchReturnMin) {
-            showToast('A saída final deve ser posterior ao retorno do almoço.', 'error');
-            return;
-        }
+    if (!currentUser || !currentUser.id) {
+        showToast("Erro: usuário sem ID. Saia e faça login novamente.", "error");
+        console.error("currentUser sem id:", currentUser);
+        return;
+    }
 
-        // Verify if entry for this date already exists
-        const existingIndex = currentUser.entries.findIndex(ent => ent.date === date);
-        const newEntry = {
-            id: Date.now().toString(36) + Math.random().toString(36).substr(2, 5),
+    if (!date || !entry || !lunchOut || !lunchReturn || !exit) {
+        showToast("Preencha todos os campos do horário.", "error");
+        console.error("Campos faltando:", {
             date,
             entry,
             lunchOut,
             lunchReturn,
             exit
-        };
+        });
+        return;
+    }
 
-        if (existingIndex >= 0) {
-            // Overwrite existing point with confirmation (using toast logic instead of window.confirm)
-            // For simple overwrite, we will just update it directly and notify the user.
-            currentUser.entries[existingIndex] = newEntry;
-            showToast('Registro de ponto atualizado com sucesso.', 'success');
-        } else {
-            currentUser.entries.push(newEntry);
-            showToast('Novo registro de ponto salvo com sucesso.', 'success');
-        }
+    const entryMin = timeToMinutes(entry);
+    const lunchOutMin = timeToMinutes(lunchOut);
+    const lunchReturnMin = timeToMinutes(lunchReturn);
+    const exitMin = timeToMinutes(exit);
 
-        // Update database and save session
-        const userKey = currentUser.name.toLowerCase().replace(/\s+/g, '_');
-        users[userKey] = currentUser;
-        saveUsersData();
+    if (lunchOutMin <= entryMin) {
+        showToast("A saída para almoço deve ser posterior à entrada.", "error");
+        return;
+    }
 
-        // Clear values to avoid double click but preserve date
-        pointEntryInput.value = '';
-        pointLunchOutInput.value = '';
-        pointLunchReturnInput.value = '';
-        pointExitInput.value = '';
+    if (lunchReturnMin <= lunchOutMin) {
+        showToast("O retorno do almoço deve ser posterior à saída de almoço.", "error");
+        return;
+    }
 
-        // Navigate back to Dashboard to see updated metrics
-        setTimeout(() => {
-            switchPanel('panel-summary');
-        }, 1200);
-    });
+    if (exitMin <= lunchReturnMin) {
+        showToast("A saída final deve ser posterior ao retorno do almoço.", "error");
+        return;
+    }
+
+    const registro = {
+        usuario_id: currentUser.id,
+        data: date,
+        entrada: entry,
+        saida_almoco: lunchOut,
+        retorno_almoco: lunchReturn,
+        saida: exit
+    };
+
+    console.log("ENVIANDO PARA SUPABASE:", registro);
+
+    const { data, error } = await supabaseClient
+        .from("registros_ponto")
+        .insert([registro])
+        .select()
+        .single();
+
+    if (error) {
+        console.error("ERRO REAL AO SALVAR NO SUPABASE:", error);
+        showToast("Erro ao salvar ponto: " + error.message, "error");
+        return;
+    }
+
+    console.log("SALVO NO SUPABASE:", data);
+
+    const novoRegistroLocal = {
+        id: String(data.id),
+        date: data.data,
+        entry: data.entrada,
+        lunchOut: data.saida_almoco,
+        lunchReturn: data.retorno_almoco,
+        exit: data.saida
+    };
+
+    if (!currentUser.entries) {
+        currentUser.entries = [];
+    }
+
+    currentUser.entries.push(novoRegistroLocal);
+    setCurrentSession(currentUser);
+
+    updateDashboardData();
+    renderHistoryTable();
+
+    showToast("Novo registro de ponto salvo com sucesso.", "success");
+
+    pointEntryInput.value = "";
+    pointLunchOutInput.value = "";
+    pointLunchReturnInput.value = "";
+    pointExitInput.value = "";
+
+    setTimeout(() => {
+        switchPanel("panel-summary");
+    }, 800);
+});
 
     // ================= HISTORIC LIST RENDERING =================
     filterMonthInput.addEventListener('change', renderHistoryTable);
@@ -1142,4 +1230,4 @@ document.addEventListener('DOMContentLoaded', () => {
 
         svgChartContainer.appendChild(svg);
     }
-});
+    });
