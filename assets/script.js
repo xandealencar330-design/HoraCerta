@@ -95,6 +95,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const pointExitInput = document.getElementById('point-exit');
     const motivoSelect = document.getElementById('motivo');
     const justificativaTextarea = document.getElementById('justificativa');
+    const liberacaoEmpresaCheckbox = document.getElementById('liberacao-empresa');
     const motivoField = document.getElementById('motivo-field');
     const justificativaField = document.getElementById('justificativa-field');
     const observationCard = document.getElementById('observation-card');
@@ -288,7 +289,8 @@ async function carregarPontosDoSupabase() {
         lunchReturn: ponto.retorno_almoco,
         exit: ponto.saida,
         motivo: ponto.motivo || '',
-        justificativa: ponto.justificativa || ''
+        justificativa: ponto.justificativa || '',
+        liberacaoEmpresa: Boolean(ponto.liberacao_empresa)
     }));
 
     setCurrentSession(currentUser);
@@ -783,6 +785,15 @@ showDashboard();
             };
         }
 
+        if (entry.liberacaoEmpresa) {
+            return {
+                tone: 'positive',
+                label: 'Liberação da Empresa',
+                detail: 'Dia liberado oficialmente pela empresa: jornada concluída sem pendências.',
+                debtMinutes: 0
+            };
+        }
+
         if (dailyBalanceMinutes >= 0) {
             return {
                 tone: 'positive',
@@ -980,14 +991,16 @@ showDashboard();
         const dailyWorkedMinutes = todayEntry ? calculateWorkedMinutes(todayEntry) : 0;
         const dailyRequiredMinutes = getDailyTargetMinutes(todayStr, currentUser.contractType);
         const isTodayHoliday = Boolean(holidayName);
+        const isTodayReleased = Boolean(todayEntry?.liberacaoEmpresa);
+        const effectiveDailyRequiredMinutes = isTodayReleased ? dailyRequiredMinutes : dailyRequiredMinutes;
         
         // Calculate daily percentage
-        const dailyPercentage = dailyRequiredMinutes === 0 ? 100 : Math.min(100, Math.round((dailyWorkedMinutes / dailyRequiredMinutes) * 100));
+        const dailyPercentage = effectiveDailyRequiredMinutes === 0 ? 100 : Math.min(100, Math.round((dailyWorkedMinutes / effectiveDailyRequiredMinutes) * 100));
         
         // Update daily elements
-        trackingDailySubtitle.textContent = isTodayHoliday ? `Feriado • ${holidayName}` : `Meta: ${dailyRequiredMinutes / 60}h`;
-        progressDailyFill.style.width = `${dailyRequiredMinutes === 0 ? 100 : dailyPercentage}%`;
-        progressDailyPercentage.textContent = isTodayHoliday ? 'Feriado' : `${dailyPercentage}%`;
+        trackingDailySubtitle.textContent = isTodayHoliday ? `Feriado • ${holidayName}` : isTodayReleased ? 'Liberação da Empresa' : `Meta: ${dailyRequiredMinutes / 60}h`;
+        progressDailyFill.style.width = `${effectiveDailyRequiredMinutes === 0 ? 100 : dailyPercentage}%`;
+        progressDailyPercentage.textContent = isTodayHoliday ? 'Feriado' : isTodayReleased ? 'Concluído' : `${dailyPercentage}%`;
         
         // Remove prior alert classes
         alertDailyBox.classList.remove('alert-warning', 'alert-success', 'alert-danger');
@@ -996,6 +1009,10 @@ showDashboard();
             alertDailyBox.classList.add('alert-success');
             alertDailyIcon.textContent = '✅';
             alertDailyText.textContent = 'Feriado: a jornada diária não gera obrigação de horas.';
+        } else if (isTodayReleased) {
+            alertDailyBox.classList.add('alert-success');
+            alertDailyIcon.textContent = '🏢';
+            alertDailyText.textContent = 'Dia liberado pela empresa: a jornada é considerada concluída.';
         } else if (dailyWorkedMinutes >= dailyRequiredMinutes) {
             alertDailyBox.classList.add('alert-success');
             alertDailyIcon.textContent = '✅';
@@ -1019,6 +1036,9 @@ showDashboard();
             if (todayEntry.justificativa) {
                 observationCard.classList.remove('hidden');
                 observationContent.innerHTML = `<strong>Motivo:</strong> ${todayEntry.motivo || 'Não informado'}<br><br><strong>Justificativa:</strong> ${todayEntry.justificativa}`;
+            } else if (todayEntry.liberacaoEmpresa) {
+                observationCard.classList.remove('hidden');
+                observationContent.innerHTML = '<strong>Motivo:</strong> Liberação da Empresa';
             } else {
                 observationCard.classList.add('hidden');
             }
@@ -1081,6 +1101,7 @@ formRegisterHours.addEventListener('submit', async (e) => {
     const exit = pointExitInput.value;
     const motivo = motivoSelect.value;
     const justificativa = justificativaTextarea.value.trim();
+    const liberacaoEmpresa = liberacaoEmpresaCheckbox.checked;
 
     console.log("CLICOU EM SALVAR REGISTRO");
     console.log("USUÁRIO ATUAL:", currentUser);
@@ -1132,7 +1153,7 @@ formRegisterHours.addEventListener('submit', async (e) => {
 
     const workedMinutes = calculateWorkedMinutes({ entry, lunchOut, lunchReturn, exit });
     const targetMinutes = getDailyTargetMinutes(date, currentUser.contractType);
-    const shouldSuggestJustificativa = targetMinutes > 0 && workedMinutes < targetMinutes && (!motivo && !justificativa);
+    const shouldSuggestJustificativa = !liberacaoEmpresa && targetMinutes > 0 && workedMinutes < targetMinutes && (!motivo && !justificativa);
 
     if (shouldSuggestJustificativa) {
         highlightJustificativaFields();
@@ -1148,7 +1169,8 @@ formRegisterHours.addEventListener('submit', async (e) => {
         retorno_almoco: lunchReturn,
         saida: exit,
         motivo,
-        justificativa
+        justificativa,
+        liberacao_empresa: liberacaoEmpresa
     };
 
     console.log("ENVIANDO PARA SUPABASE:", registro);
@@ -1175,7 +1197,8 @@ formRegisterHours.addEventListener('submit', async (e) => {
         lunchReturn: data.retorno_almoco,
         exit: data.saida,
         motivo: data.motivo || '',
-        justificativa: data.justificativa || ''
+        justificativa: data.justificativa || '',
+        liberacaoEmpresa: Boolean(data.liberacao_empresa)
     };
 
     if (!currentUser.entries) {
@@ -1194,6 +1217,7 @@ formRegisterHours.addEventListener('submit', async (e) => {
     pointLunchOutInput.value = "";
     pointLunchReturnInput.value = "";
     pointExitInput.value = "";
+    liberacaoEmpresaCheckbox.checked = false;
     resetJustificativaForm();
 
     setTimeout(() => {
@@ -1225,7 +1249,8 @@ formRegisterHours.addEventListener('submit', async (e) => {
             retorno_almoco: lunchReturn,
             saida: exit,
             motivo: '',
-            justificativa: ''
+            justificativa: '',
+            liberacao_empresa: false
         };
 
         const { data, error } = await supabaseClient
@@ -1357,13 +1382,17 @@ formRegisterHours.addEventListener('submit', async (e) => {
             const tdObservation = document.createElement('td');
             const btnViewObservation = document.createElement('button');
             btnViewObservation.className = 'view-observation-btn';
-            btnViewObservation.textContent = '📝 Ver';
+            btnViewObservation.textContent = entry.liberacaoEmpresa ? '🏢 Ver' : '📝 Ver';
             btnViewObservation.addEventListener('click', () => {
                 const text = entry.justificativa?.trim();
                 const motivoText = entry.motivo?.trim() || 'Não informado';
-                modalObservationContent.innerHTML = text
-                    ? `<p><strong>Motivo:</strong> ${motivoText}</p><p><strong>Justificativa:</strong> ${text}</p>`
-                    : '<p>Nenhuma observação registrada.</p>';
+                if (entry.liberacaoEmpresa) {
+                    modalObservationContent.innerHTML = '<p><strong>Tipo:</strong> Liberação da Empresa</p><p><strong>Motivo:</strong> Liberação da Empresa</p>';
+                } else if (text) {
+                    modalObservationContent.innerHTML = `<p><strong>Motivo:</strong> ${motivoText}</p><p><strong>Justificativa:</strong> ${text}</p>`;
+                } else {
+                    modalObservationContent.innerHTML = '<p>Nenhuma observação registrada.</p>';
+                }
                 showModal(observacaoModal);
             });
             tdObservation.appendChild(btnViewObservation);

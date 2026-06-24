@@ -1297,6 +1297,25 @@ button, .btn {
     box-shadow: 0 0 0 3px rgba(217, 119, 6, 0.16);
 }
 
+.checkbox-group {
+    margin-top: 4px;
+}
+
+.checkbox-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 600;
+    color: var(--color-text-primary);
+    cursor: pointer;
+}
+
+.checkbox-label input {
+    width: 18px;
+    height: 18px;
+    accent-color: var(--color-primary);
+}
+
 .daily-markings-box {
     margin-top: 16px;
     padding: 14px 16px;
